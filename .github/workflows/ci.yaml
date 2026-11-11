@@ -1,5 +1,5 @@
 
-name: Orders API CI
+name: Orders API CI/CD
 
 on:
   push:
@@ -32,3 +32,29 @@ jobs:
 
       - name: Run Jest tests
         run: npm test
+
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: build-and-test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            neethis/qqs-orders-api:1.0
+            neethis/qqs-orders-api:latest
+            neethis/qqs-orders-api:${{ github.sha }}
